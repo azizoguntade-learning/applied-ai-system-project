@@ -10,9 +10,6 @@
 
 This recommender is designed to generate music track suggestions based on a user's explicit structural audio    preferences. It assumes the user knows exactly what genre, mood, and energy level they are looking for. It is primarily built for classroom exploration and simulation rather than a commercial production environment.
 
-Prompts:  
-
-The system uses a mathematical content-based filtering approach. It takes a user's target preferences (genre, mood, and energy) and compares them against the metadata of each song in our catalog. It awards +2.0 points for an exact genre match, +1.0 point for an exact mood match, and up to +1.0 point based on how close the song's energy level is to the user's target energy. The songs with the highest total scores are ranked and recommended.
 ---
 
 ## 3. How the Model Works  
