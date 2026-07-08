@@ -17,17 +17,22 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+The recommendation pipeline processes user preferences and song metadata to calculate mathematical matching scores, yielding a ranked list of top recommendations.
 
-Some prompts to answer:
+- Song Features: Each Song in the catalog is represented by categorical features (genre, mood) and numerical audio features (energy, tempo_bpm, valence, danceability, acousticness).
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+- User Profile: The UserProfile stores the user's target preferences, specifically their favorite_genre, favorite_mood, a continuous target_energy preference (0.0 to 1.0), and a boolean for likes_acoustic.
 
-You can include a simple diagram or bullet list if helpful.
+Computing the Score: The Recommender evaluates each song against the user's profile and assigns a total score (out of a maximum 4.0 points):
+
+-  +2.0 points for a direct genre match.
+
+-  +1.0 point for a direct mood match.
+
+-  Up to +1.0 point for energy proximity (calculated as 1.0 - abs(target_energy - song_energy)).
+
+Choosing Recommendations: The system iterates through the entire catalog, scores each song, sorts the list in descending order by total score, and returns the top K (e.g., top 5) highest-scoring tracks.
+
 
 ---
 
