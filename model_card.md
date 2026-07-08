@@ -58,6 +58,7 @@ I also tested a tricky profile: a user wanting an "Intense Ambient" track with h
 ## 8. Ideas for Improvement 
 
 If I kept developing this, I would change two main things. First, I would let the user decide how important genre is, instead of forcing the 2-point rule. Second, I would add collaborative filtering. This means suggesting songs based on what similar users like. It would help break the filter bubble.
+
 ---
 
 ## 9. Personal Reflection  
