@@ -11,24 +11,28 @@ You will implement the functions in recommender.py:
 
 from recommender import load_songs, recommend_songs
 
-
 def main() -> None:
+    # 1. Load the data
     songs = load_songs("data/songs.csv") 
+    print(f"Loaded songs: {len(songs)}\n")
 
-    # Starter example profile
+    # 2. Define the target user profile
     user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    print("# User profile: genre=pop, mood=happy, energy=0.8")
+    print("# Recommendations:\n")
 
+    # 3. Get the ranked recommendations
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
-    print("\nTop recommendations:\n")
-    for rec in recommendations:
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
+    # 4. Print the results in a clean, readable format
+    for i, rec in enumerate(recommendations, 1):
+        # Unpack the tuple returned by recommend_songs
         song, score, explanation = rec
-        print(f"{song['title']} - Score: {score:.2f}")
-        print(f"Because: {explanation}")
+        
+        # Clean, readable terminal formatting
+        print(f"{i}. {song['title']} - Score: {score:.2f}")
+        print(f"   Because: {explanation}")
         print()
-
 
 if __name__ == "__main__":
     main()
