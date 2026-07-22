@@ -11,7 +11,31 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This version upgrades the starter project into a small **applied AI system**: a
+modular, agentic pipeline that turns a free-text request (e.g. *"high energy
+happy pop"*) into ranked, explained recommendations. It is fully deterministic
+and offline — no external LLM or API keys — so every component is easy to test.
+
+---
+
+## Agentic Architecture
+
+A request flows through an orchestrated pipeline (see
+[diagrams/architecture.mmd](diagrams/architecture.mmd)):
+
+1. **Guardrails** ([src/guardrails.py](src/guardrails.py)) — reject off-topic
+   requests ("give me a recipe") and prompt-injection attempts before anything
+   else runs.
+2. **Routing Agent** ([src/agents.py](src/agents.py)) — parse free text into a
+   structured `Intent` (genre / mood / energy), using vocabulary derived from
+   the catalog.
+3. **Retrieval Agent** — score and rank the catalog for that intent
+   ([src/scoring.py](src/scoring.py)).
+4. **Reasoning Agent** — format the ranked results into a readable explanation.
+
+The `Orchestrator` ([src/orchestrator.py](src/orchestrator.py)) wires these
+together and returns a `PipelineResult` with a status of `OK`, `BLOCKED`, or
+`LOW_CONFIDENCE`.
 
 ---
 

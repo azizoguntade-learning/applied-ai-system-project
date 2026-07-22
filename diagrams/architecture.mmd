@@ -1,0 +1,33 @@
+%% Music Recommender - Agentic AI System Architecture
+%% Flow: raw request -> guardrails -> routing -> retrieval -> reasoning -> response
+flowchart TD
+    User([User free-text request]) --> Orchestrator
+
+    subgraph Orchestrator["Orchestrator (src/orchestrator.py)"]
+        direction TB
+
+        Guard{"Guardrails<br/>(src/guardrails.py)<br/>off-topic? injection?<br/>empty? too long?"}
+        Router["Routing Agent<br/>(src/agents.py)<br/>free text -> Intent<br/>genre / mood / energy"]
+        IntentCheck{"music request<br/>with taste signal?"}
+        Retriever["Retrieval Agent<br/>(src/agents.py)<br/>search + score catalog"]
+        Reasoner["Reasoning Agent<br/>(src/agents.py)<br/>format explanation"]
+
+        Guard -- "blocked" --> Refusal["PipelineResult<br/>status = BLOCKED"]
+        Guard -- "clean" --> Router
+        Router --> IntentCheck
+        IntentCheck -- "no" --> LowConf["PipelineResult<br/>status = LOW_CONFIDENCE"]
+        IntentCheck -- "yes" --> Retriever
+        Retriever --> Reasoner
+        Reasoner --> Success["PipelineResult<br/>status = OK + ranked songs"]
+    end
+
+    Scoring["Scoring<br/>(src/scoring.py)<br/>+2 genre / +1 mood / energy proximity"]
+    Catalog[("Song catalog<br/>data/songs.csv<br/>via src/data_loader.py")]
+
+    Retriever -.uses.-> Scoring
+    Retriever -.reads.-> Catalog
+    Router -.vocab from.-> Catalog
+
+    Refusal --> Response([Response to user])
+    LowConf --> Response
+    Success --> Response
