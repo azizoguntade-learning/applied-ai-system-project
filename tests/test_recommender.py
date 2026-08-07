@@ -13,10 +13,10 @@ Run with:  pytest -v
 """
 
 import time
-from pathlib import Path
 
 import pytest
 
+from src import config
 from src.agents import RoutingAgent
 from src.data_loader import load_songs
 from src.guardrails import GuardrailCategory, validate_input
@@ -27,8 +27,6 @@ from src.recommender import Recommender
 # Latency budget for a single end-to-end request on the demo catalog.
 # Deterministic, in-process work should be well under this.
 LATENCY_BUDGET_S = 0.05
-
-CATALOG_PATH = Path(__file__).resolve().parent.parent / "data" / "songs.csv"
 
 
 # --------------------------------------------------------------------------- #
@@ -48,7 +46,7 @@ def make_small_recommender() -> Recommender:
 
 @pytest.fixture(scope="module")
 def catalog():
-    return load_songs(str(CATALOG_PATH))
+    return load_songs(config.CATALOG_PATH)
 
 
 @pytest.fixture(scope="module")

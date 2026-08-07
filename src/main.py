@@ -10,10 +10,9 @@ Usage:
 
 import sys
 
+from . import config
 from .data_loader import load_songs
 from .orchestrator import Orchestrator
-
-CATALOG_PATH = "data/songs.csv"
 
 # A mix of valid taste queries and adversarial cases to show the pipeline's
 # behavior end to end.
@@ -30,15 +29,18 @@ DEMO_QUERIES = [
 def _run(orchestrator: Orchestrator, text: str) -> None:
     print("=" * 60)
     print(f"Request: {text!r}")
-    result = orchestrator.handle(text, k=3)
+    result = orchestrator.handle(text, k=config.DEMO_K)
     print(f"[{result.status.value}]")
     print(result.message)
     print()
 
 
 def main() -> None:
-    songs = load_songs(CATALOG_PATH)
-    print(f"Loaded {len(songs)} songs from {CATALOG_PATH}\n")
+    config.load_env_file()
+
+    songs = load_songs(config.CATALOG_PATH)
+    rel_path = config.CATALOG_PATH.relative_to(config.PROJECT_ROOT)
+    print(f"Loaded {len(songs)} songs from {rel_path}\n")
     orchestrator = Orchestrator(songs)
 
     queries = sys.argv[1:] if len(sys.argv) > 1 else DEMO_QUERIES
