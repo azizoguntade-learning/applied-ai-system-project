@@ -122,4 +122,15 @@ class PipelineResult:
     recommendations: List[Recommendation] = field(default_factory=list)
     trace: List[TraceStep] = field(default_factory=list)
     repaired: bool = False
+
+    #: The critic's verdict on the recommendations actually returned. After a
+    #: successful repair this is the verdict on the *repaired* set, so it is
+    #: usually clean -- use ``critic_flagged`` to ask whether the check step
+    #: ever objected.
     critic: Optional[CriticVerdict] = None
+
+    #: True when the critic's *first* look found at least one issue, whether or
+    #: not a repair followed. This is the honest measure of how often the check
+    #: step earns its place; ``critic`` alone would report zero flags on every
+    #: successfully repaired request.
+    critic_flagged: bool = False

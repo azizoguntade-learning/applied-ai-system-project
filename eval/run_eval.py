@@ -61,7 +61,7 @@ def check_case(expect: Dict[str, Any], result: PipelineResult) -> List[str]:
                 failures.append(f"repaired: expected {want}, got {result.repaired}")
 
         elif key == "critic_flagged":
-            flagged = result.critic is not None and not result.critic.ok
+            flagged = result.critic_flagged
             if flagged != want:
                 failures.append(f"critic_flagged: expected {want}, got {flagged}")
 
@@ -123,7 +123,7 @@ def run_cases(cases: List[dict], orchestrator: Orchestrator, k: int) -> List[dic
             "repaired": result.repaired,
             "status": result.status.value,
             "confidence": result.intent.confidence if result.intent else 0.0,
-            "critic_flagged": result.critic is not None and not result.critic.ok,
+            "critic_flagged": result.critic_flagged,
         })
     return outcomes
 

@@ -93,7 +93,7 @@ class Orchestrator:
         trace.append(TraceStep("retriever", "retrieve", self._describe_top(recommendations)))
 
         # 4. Critic (check), with at most MAX_CRITIC_RETRIES repair attempts.
-        recommendations, verdict, repaired, effective = self._check_and_repair(
+        recommendations, verdict, repaired, effective, flagged = self._check_and_repair(
             intent, recommendations, k, trace
         )
 
@@ -122,6 +122,7 @@ class Orchestrator:
             trace=trace,
             repaired=repaired,
             critic=verdict,
+            critic_flagged=flagged,
         ))
 
     # ----------------------------------------------------------------- #
@@ -130,7 +131,9 @@ class Orchestrator:
     def _check_and_repair(self, intent, recommendations, k, trace):
         """Judge the results and, if warranted, retry once with a relaxed intent.
 
-        Returns ``(recommendations, verdict, repaired, effective_intent)``. The
+        Returns ``(recommendations, verdict, repaired, effective_intent,
+        flagged)``, where ``flagged`` records whether the *first* check found
+        anything -- a successful repair would otherwise erase that fact. The
         retry is kept only when the critic finds strictly fewer problems with
         it, so a repair can never make the answer worse than doing nothing.
         """
@@ -140,8 +143,10 @@ class Orchestrator:
             "no issues" if verdict.ok else "; ".join(verdict.issues),
         ))
 
+        flagged = not verdict.ok
+
         if verdict.ok:
-            return recommendations, verdict, False, intent
+            return recommendations, verdict, False, intent, flagged
 
         logger.info("Critic flagged %d issue(s): %s", len(verdict.issues), verdict.issues)
 
@@ -177,7 +182,7 @@ class Orchestrator:
                     "Repair accepted: %d issue(s) -> %d",
                     len(verdict.issues), len(retry_verdict.issues),
                 )
-                return retry_recs, retry_verdict, True, relaxed
+                return retry_recs, retry_verdict, True, relaxed, flagged
 
             trace.append(TraceStep(
                 "orchestrator", "reject_repair",
@@ -187,7 +192,7 @@ class Orchestrator:
             logger.info("Repair rejected: retry was no better; keeping the original.")
             break
 
-        return recommendations, verdict, False, intent
+        return recommendations, verdict, False, intent, flagged
 
     @staticmethod
     def _repair_note(original: Intent, effective: Intent) -> str:
