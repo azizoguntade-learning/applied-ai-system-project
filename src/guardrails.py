@@ -12,10 +12,13 @@ Rule-based on purpose: fast, free, offline, and easy to unit-test. It is not a
 complete defense, but it stops the obvious cases from reaching the router.
 """
 
+import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Cap input length to avoid pathological / abusive payloads.
 MAX_INPUT_LENGTH = 500
@@ -88,6 +91,7 @@ def validate_input(text: str, known_terms: Optional[List[str]] = None) -> Guardr
     the generic music vocabulary.
     """
     if text is None or not text.strip():
+        logger.info("Guardrail BLOCK [empty]")
         return GuardrailResult(
             allowed=False,
             category=GuardrailCategory.EMPTY,
@@ -95,6 +99,7 @@ def validate_input(text: str, known_terms: Optional[List[str]] = None) -> Guardr
         )
 
     if len(text) > MAX_INPUT_LENGTH:
+        logger.info("Guardrail BLOCK [too_long] %d chars (limit %d)", len(text), MAX_INPUT_LENGTH)
         return GuardrailResult(
             allowed=False,
             category=GuardrailCategory.TOO_LONG,
@@ -107,6 +112,7 @@ def validate_input(text: str, known_terms: Optional[List[str]] = None) -> Guardr
     for pattern in _INJECTION_PATTERNS:
         match = re.search(pattern, normalized)
         if match:
+            logger.info("Guardrail BLOCK [injection] matched %r", match.group(0))
             return GuardrailResult(
                 allowed=False,
                 category=GuardrailCategory.INJECTION,
@@ -124,6 +130,7 @@ def validate_input(text: str, known_terms: Optional[List[str]] = None) -> Guardr
     off_topic_hit = _contains_any(normalized, _OFF_TOPIC_TERMS)
     music_hit = _contains_any(normalized, taste_vocab)
     if off_topic_hit and not music_hit:
+        logger.info("Guardrail BLOCK [off_topic] matched %r", off_topic_hit)
         return GuardrailResult(
             allowed=False,
             category=GuardrailCategory.OFF_TOPIC,
@@ -132,6 +139,7 @@ def validate_input(text: str, known_terms: Optional[List[str]] = None) -> Guardr
             matched=off_topic_hit,
         )
 
+    logger.debug("Guardrail PASS [clean]")
     return GuardrailResult(
         allowed=True,
         category=GuardrailCategory.CLEAN,

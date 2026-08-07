@@ -6,9 +6,12 @@ original inconsistency where ``load_songs`` returned dicts while the
 """
 
 import csv
+import logging
 from typing import List
 
 from .models import Song
+
+logger = logging.getLogger(__name__)
 
 
 def load_songs(csv_path: str) -> List[Song]:
@@ -31,4 +34,6 @@ def load_songs(csv_path: str) -> List[Song]:
                     acousticness=float(row["acousticness"]),
                 )
             )
+
+    logger.info("Loaded %d songs from %s", len(songs), csv_path)
     return songs

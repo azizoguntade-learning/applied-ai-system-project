@@ -12,6 +12,7 @@ import sys
 
 from . import config
 from .data_loader import load_songs
+from .logging_setup import configure_logging
 from .orchestrator import Orchestrator
 
 # A mix of valid taste queries and adversarial cases to show the pipeline's
@@ -37,6 +38,7 @@ def _run(orchestrator: Orchestrator, text: str) -> None:
 
 def main() -> None:
     config.load_env_file()
+    configure_logging()
 
     songs = load_songs(config.CATALOG_PATH)
     rel_path = config.CATALOG_PATH.relative_to(config.PROJECT_ROOT)

@@ -17,5 +17,9 @@ venv/
 # Secrets — never commit a real API key. See .env.example for the template.
 .env
 
-# NOTE: logs/ is deliberately NOT ignored. The committed run logs are the
-# reproducible execution evidence referenced from README.md.
+# Live log output — rewritten on every run, so not worth tracking.
+logs/run.log
+logs/traces.jsonl
+
+# NOTE: logs/evidence/ is deliberately NOT ignored. Those curated snapshots are
+# the reproducible execution evidence referenced from README.md.
