@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+# Put the project root on sys.path so `import src` works when pytest is invoked
+# as a bare `pytest` (not just `python -m pytest`, which adds cwd implicitly).
+pythonpath = ["."]
+testpaths = ["tests"]
