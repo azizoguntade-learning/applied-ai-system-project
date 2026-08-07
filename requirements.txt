@@ -1,6 +1,5 @@
-# Runtime
-anthropic>=0.40          # optional at run time: the pipeline falls back to its
-                         # deterministic path when ANTHROPIC_API_KEY is unset
-
 # Testing
 pytest>=7.0              # 7.0+ required for the `pythonpath` ini option
+
+# No runtime dependencies. The recommender is fully deterministic and offline:
+# it uses only the Python standard library (csv, logging, argparse, json).

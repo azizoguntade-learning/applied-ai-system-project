@@ -38,7 +38,6 @@ def _run(orchestrator: Orchestrator, text: str) -> None:
 
 
 def main() -> None:
-    config.load_env_file()
     configure_logging()
 
     songs = load_songs(config.CATALOG_PATH)
