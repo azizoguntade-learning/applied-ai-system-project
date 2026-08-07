@@ -12,6 +12,7 @@ import sys
 
 from . import config
 from .data_loader import load_songs
+from .errors import RecommenderError
 from .logging_setup import configure_logging
 from .orchestrator import Orchestrator
 
@@ -50,5 +51,23 @@ def main() -> None:
         _run(orchestrator, text)
 
 
+def cli() -> int:
+    """Entry point wrapper: turn known failures into readable messages.
+
+    Returns a POSIX exit code so the CLI composes with shell scripts and CI.
+    Unexpected exceptions are deliberately left to propagate -- a real bug
+    should show its traceback rather than be silently swallowed.
+    """
+    try:
+        main()
+    except RecommenderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        return 130
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(cli())

@@ -16,9 +16,7 @@ import time
 
 import pytest
 
-from src import config
 from src.agents import RoutingAgent
-from src.data_loader import load_songs
 from src.guardrails import GuardrailCategory, validate_input
 from src.models import PipelineStatus, Song, UserProfile
 from src.orchestrator import Orchestrator
@@ -44,14 +42,8 @@ def make_small_recommender() -> Recommender:
     return Recommender(songs)
 
 
-@pytest.fixture(scope="module")
-def catalog():
-    return load_songs(config.CATALOG_PATH)
-
-
-@pytest.fixture(scope="module")
-def orchestrator(catalog):
-    return Orchestrator(catalog)
+# The `catalog` and `orchestrator` fixtures live in tests/conftest.py so every
+# test module shares one loaded catalog.
 
 
 # --------------------------------------------------------------------------- #
