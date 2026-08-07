@@ -115,13 +115,47 @@
       }
     },
     {
-      "id": "repair-declined-happy-classical",
+      "id": "repair-widen-happy-classical",
       "category": "critic_repair",
       "request": "happy classical",
       "expect": {
         "status": "ok",
         "critic_flagged": true,
-        "repaired": false
+        "repaired": true,
+        "top_mood": "happy"
+      }
+    },
+    {
+      "id": "repair-declined-euphoric-edm",
+      "category": "critic_repair",
+      "request": "euphoric edm",
+      "expect": {
+        "status": "ok",
+        "critic_flagged": true,
+        "repaired": false,
+        "top_title": "Neon Pulse"
+      }
+    },
+    {
+      "id": "taste-country-nostalgic",
+      "category": "taste",
+      "request": "nostalgic country",
+      "expect": {
+        "status": "ok",
+        "top_genre": "country",
+        "top_mood": "nostalgic",
+        "critic_flagged": false
+      }
+    },
+    {
+      "id": "taste-rnb-romantic",
+      "category": "taste",
+      "request": "romantic r&b",
+      "expect": {
+        "status": "ok",
+        "top_genre": "r&b",
+        "top_mood": "romantic",
+        "critic_flagged": false
       }
     },
     {

@@ -203,8 +203,14 @@ def print_report(outcomes: List[dict], stats: dict, quiet: bool = False) -> None
 # --------------------------------------------------------------------------- #
 # Entry point
 # --------------------------------------------------------------------------- #
-def load_golden(path: Path = GOLDEN_PATH) -> List[dict]:
-    with open(path, encoding="utf-8") as handle:
+def load_golden(path: Optional[Path] = None) -> List[dict]:
+    """Read the golden case list.
+
+    ``path`` is resolved at call time rather than bound as a default argument,
+    so ``GOLDEN_PATH`` stays overridable -- a default of ``path=GOLDEN_PATH``
+    would freeze the value at import and silently ignore any later change.
+    """
+    with open(path or GOLDEN_PATH, encoding="utf-8") as handle:
         return json.load(handle)["cases"]
 
 
