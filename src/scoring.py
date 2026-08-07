@@ -8,6 +8,11 @@ scores stay identical:
 - +2.0 for an exact genre match
 - +1.0 for an exact mood match
 - up to +1.0 for energy proximity (1.0 - |target - song|)
+- up to +1.0 for acousticness, but *only* when the user asked for acoustic
+
+The acoustic term is conditional on purpose. It leaves the original three-term
+rule untouched for every profile that expresses no acoustic preference, so the
+maximum score is 4.0 as before and rises to 5.0 only for a user who asked.
 """
 
 from typing import List, Tuple
@@ -37,6 +42,13 @@ def score_song(user: UserProfile, song: Song) -> Tuple[float, List[str]]:
         f"Energy proximity {song.energy} vs {user.target_energy} "
         f"(+{energy_proximity:.2f})"
     )
+
+    # 4. Acoustic preference (up to +1.0), only when the user expressed one.
+    #    Without this guard the term would silently reshuffle every ranking in
+    #    the project, including profiles that never mentioned acoustic music.
+    if user.likes_acoustic:
+        score += song.acousticness
+        reasons.append(f"Acoustic match {song.acousticness} (+{song.acousticness:.2f})")
 
     return float(score), reasons
 
