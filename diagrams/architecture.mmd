@@ -1,33 +1,86 @@
-%% Music Recommender - Agentic AI System Architecture
-%% Flow: raw request -> guardrails -> routing -> retrieval -> reasoning -> response
+%% Music Recommender — Applied AI System Architecture
+%%
+%% Data flow:  input -> guardrails -> PLAN -> ACT -> CHECK -> output
+%%
+%% The check step (CriticAgent) is what makes this an agentic loop rather than
+%% a straight-through pipeline: it re-reads the retrieved results against the
+%% routed intent and can send the request back for one bounded retry.
+%%
+%% Verification happens on two timescales, both shown below:
+%%   - per request, automatically, by the CriticAgent
+%%   - per change, by the test suite and golden-set evaluation, read by a human
 flowchart TD
-    User([User free-text request]) --> Orchestrator
+    User([User free-text request]) --> Guard
 
-    subgraph Orchestrator["Orchestrator (src/orchestrator.py)"]
+    subgraph Pipeline["Orchestrator — src/orchestrator.py"]
         direction TB
 
-        Guard{"Guardrails<br/>(src/guardrails.py)<br/>off-topic? injection?<br/>empty? too long?"}
-        Router["Routing Agent<br/>(src/agents.py)<br/>free text -> Intent<br/>genre / mood / energy"]
-        IntentCheck{"music request<br/>with taste signal?"}
-        Retriever["Retrieval Agent<br/>(src/agents.py)<br/>search + score catalog"]
-        Reasoner["Reasoning Agent<br/>(src/agents.py)<br/>format explanation"]
+        Guard{"GUARDRAILS<br/>src/guardrails.py<br/>empty? too long?<br/>injection? off-topic?"}
 
-        Guard -- "blocked" --> Refusal["PipelineResult<br/>status = BLOCKED"]
+        Router["ROUTING AGENT — plan<br/>src/agents.py<br/>free text to Intent:<br/>genre / mood / energy / acoustic"]
+
+        IntentCheck{"any taste<br/>signal found?"}
+
+        Retriever["RETRIEVAL AGENT — act<br/>src/agents.py<br/>score and rank the catalog"]
+
+        Critic{"CRITIC AGENT — check<br/>src/agents.py<br/>does the top pick match<br/>genre, mood, energy, acoustic?"}
+
+        Replan["REPLAN<br/>drop the genre constraint<br/>max 1 retry; the new answer is<br/>kept only if the critic finds<br/>strictly fewer issues"]
+
+        Reasoner["REASONING AGENT<br/>src/agents.py<br/>format explanation, and say<br/>so if the search was widened"]
+
+        Guard -- "blocked" --> Refusal["status = BLOCKED"]
         Guard -- "clean" --> Router
         Router --> IntentCheck
-        IntentCheck -- "no" --> LowConf["PipelineResult<br/>status = LOW_CONFIDENCE"]
+        IntentCheck -- "no" --> LowConf["status = LOW_CONFIDENCE"]
         IntentCheck -- "yes" --> Retriever
-        Retriever --> Reasoner
-        Reasoner --> Success["PipelineResult<br/>status = OK + ranked songs"]
+        Retriever --> Critic
+        Critic -- "no issues" --> Reasoner
+        Critic -- "issues, nothing to relax" --> Reasoner
+        Critic -- "issues, genre can be dropped" --> Replan
+        Replan -- "retrieve again" --> Retriever
     end
 
-    Scoring["Scoring<br/>(src/scoring.py)<br/>+2 genre / +1 mood / energy proximity"]
-    Catalog[("Song catalog<br/>data/songs.csv<br/>via src/data_loader.py")]
+    Scoring["SCORING<br/>src/scoring.py<br/>+2.0 genre · +1.0 mood<br/>±1.0 energy · ±1.0 acoustic"]
+    Catalog[("SONG CATALOG<br/>data/songs.csv<br/>via src/data_loader.py")]
 
-    Retriever -.uses.-> Scoring
-    Retriever -.reads.-> Catalog
-    Router -.vocab from.-> Catalog
+    Retriever -. "uses" .-> Scoring
+    Retriever -. "reads" .-> Catalog
+    Router -. "vocabulary from" .-> Catalog
 
     Refusal --> Response([Response to user])
     LowConf --> Response
-    Success --> Response
+    Reasoner --> Response
+
+    %% ------------------------------------------------------------------- %%
+    %% Observability and verification: where testing and humans check the AI %%
+    %% ------------------------------------------------------------------- %%
+    Pipeline -. "every step" .-> Traces[("AGENT TRACES<br/>logs/traces.jsonl<br/>logs/run.log")]
+
+    subgraph Verification["Verification — automated"]
+        direction TB
+        Golden[("GOLDEN SET<br/>eval/golden.json<br/>23 labelled cases")]
+        Evaluator["EVALUATOR<br/>eval/run_eval.py<br/>pass/fail per case<br/>guardrail block rate<br/>critic flag and repair rate<br/>exits non-zero on failure"]
+        Tests["TEST SUITE<br/>tests/ — 118 tests<br/>scoring · critic · guardrails<br/>data loading · CLI · harness"]
+        Golden --> Evaluator
+    end
+
+    Pipeline --> Evaluator
+    Pipeline --> Tests
+
+    Human(["HUMAN REVIEW<br/>reads the report and traces,<br/>judges whether a flagged case<br/>was really wrong"])
+
+    Evaluator -- "report" --> Human
+    Tests -- "pass / fail" --> Human
+    Traces -- "why it chose that" --> Human
+    Response -. "spot-check" .-> Human
+
+    Human -- "tune scoring weights,<br/>critic thresholds,<br/>guardrail patterns" --> Pipeline
+    Human -- "add cases for<br/>newly found failures" --> Golden
+
+    classDef check fill:#fff4e6,stroke:#d97706,stroke-width:2px
+    classDef human fill:#eef2ff,stroke:#4f46e5,stroke-width:2px
+    classDef store fill:#f1f5f9,stroke:#64748b
+    class Critic,Replan check
+    class Human human
+    class Catalog,Golden,Traces store
