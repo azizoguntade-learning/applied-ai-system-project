@@ -72,6 +72,35 @@ class Recommendation:
     reasons: List[str]
 
 
+@dataclass
+class CriticVerdict:
+    """The CriticAgent's judgement of a set of recommendations.
+
+    ``issues`` is empty exactly when ``ok`` is True. ``relaxation`` names the
+    single constraint the critic thinks is worth dropping on a retry, or None
+    when it sees no repair worth attempting.
+    """
+    ok: bool
+    issues: List[str] = field(default_factory=list)
+    relaxation: Optional[str] = None
+
+
+@dataclass
+class TraceStep:
+    """One recorded step of a request's journey through the pipeline.
+
+    Collected into ``PipelineResult.trace`` and written to logs/traces.jsonl,
+    so the agent's plan -> act -> check reasoning can be inspected after the
+    fact rather than taken on trust.
+    """
+    agent: str
+    action: str
+    detail: str
+
+    def to_dict(self) -> dict:
+        return {"agent": self.agent, "action": self.action, "detail": self.detail}
+
+
 class PipelineStatus(str, Enum):
     """Terminal state of a single trip through the orchestrator."""
     OK = "ok"
@@ -81,8 +110,16 @@ class PipelineStatus(str, Enum):
 
 @dataclass
 class PipelineResult:
-    """Everything one request produces, ready to render or assert against."""
+    """Everything one request produces, ready to render or assert against.
+
+    ``repaired`` is a flag rather than a new :class:`PipelineStatus` member on
+    purpose: a repaired result is still a successful one, and existing callers
+    asserting ``status == PipelineStatus.OK`` keep working unchanged.
+    """
     status: PipelineStatus
     message: str
     intent: Optional[Intent] = None
     recommendations: List[Recommendation] = field(default_factory=list)
+    trace: List[TraceStep] = field(default_factory=list)
+    repaired: bool = False
+    critic: Optional[CriticVerdict] = None
