@@ -1,0 +1,6 @@
+$ mv data/songs.csv data/songs.csv.bak && python -m src.main "chill lofi"; echo $?
+
+Error: Song catalog not found at /Users/azizoguntade/codework/applied-ai-system-project/data/songs.csv. Check that the file exists, or point config.CATALOG_PATH somewhere else.
+
+$ echo $?
+1

@@ -1,0 +1,28 @@
+$ python -m src.main --verbose "intense ambient"
+
+Loaded 17 songs from songs.csv
+
+============================================================
+Request: 'intense ambient'
+[ok] [repaired]
+Note: no ambient track in the catalog matched that mood and energy level, so I widened the search beyond ambient.
+
+Top picks for mood=intense, energy≈0.90:
+
+1. Storm Runner — Voltline (rock, intense) · score 1.99
+   Because: Matched mood (+1.0), Energy proximity 0.91 vs 0.9 (+0.99)
+2. Gym Hero — Max Pulse (pop, intense) · score 1.97
+   Because: Matched mood (+1.0), Energy proximity 0.93 vs 0.9 (+0.97)
+3. Neon Pulse — DJ X (edm, euphoric) · score 0.95
+   Because: Energy proximity 0.95 vs 0.9 (+0.95)
+
+Agent trace:
+  guardrails    pass            clean
+  router        route           genre=ambient mood=intense energy=0.90 acoustic=False confidence=1.00
+  retriever     retrieve        Spacewalk Thoughts (ambient, chill) score 2.38
+  critic        flag            Top pick is chill, but the request asked for intense.; Top pick energy 0.28 is 0.62 away from the requested 0.90.
+  orchestrator  replan          attempt 1: drop_genre
+  critic        recheck         no issues
+  orchestrator  accept_repair   2 issue(s) -> 0; top is now Storm Runner (rock, intense) score 1.99
+  reasoner      explain         3 recommendations
+
