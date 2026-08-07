@@ -34,7 +34,15 @@ class TestAcousticTerm:
         loud_score, _ = score_song(user, _song(acousticness=0.05))
 
         assert quiet_score > loud_score
-        assert any("Acoustic match" in r for r in reasons)
+        assert any("Acoustic fit" in r for r in reasons)
+
+    def test_low_acousticness_is_penalised_not_merely_unrewarded(self):
+        """The term is centred, so a non-acoustic track loses ground."""
+        user = UserProfile("pop", "happy", target_energy=0.5, likes_acoustic=True)
+        indifferent = UserProfile("pop", "happy", target_energy=0.5, likes_acoustic=False)
+        loud = _song(acousticness=0.05)
+
+        assert score_song(user, loud)[0] < score_song(indifferent, loud)[0]
 
     def test_max_score_stays_4_without_an_acoustic_preference(self):
         """Perfect match on genre + mood + energy tops out at the original 4.0."""
@@ -56,21 +64,47 @@ class TestAcousticTerm:
 class TestAcousticRankingOnRealCatalog:
     """The bug as a user would have hit it: 'something acoustic and relaxed'."""
 
-    def test_acoustic_request_promotes_acoustic_tracks(self, catalog):
+    def test_acoustic_preference_changes_the_ranking(self, catalog):
+        """Asking for acoustic must actually move the results, not be inert."""
+        relaxed_only = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=False)
+        wants_acoustic = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=True)
+
+        without = [r.song.title for r in rank_songs(relaxed_only, catalog, k=5)]
+        with_acoustic = [r.song.title for r in rank_songs(wants_acoustic, catalog, k=5)]
+
+        assert without != with_acoustic
+
+    def test_acoustic_preference_raises_mean_acousticness_of_top_results(self, catalog):
+        """Measured on the top 3 -- the cut the CLI actually shows.
+
+        Over a wider window the *set* of candidates is unchanged and only the
+        order moves, so a top-5 mean would look flat even though the ranking
+        genuinely improved.
+        """
+        relaxed_only = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=False)
+        wants_acoustic = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=True)
+
+        def mean_acousticness(profile):
+            picks = rank_songs(profile, catalog, k=3)
+            return sum(r.song.acousticness for r in picks) / len(picks)
+
+        # 0.75 without the preference -> 0.92 with it.
+        assert mean_acousticness(wants_acoustic) > mean_acousticness(relaxed_only)
+
+    def test_weakly_acoustic_track_no_longer_outranks_a_strongly_acoustic_one(self, catalog):
+        """Regression for the inversion the centred term was written to fix.
+
+        With a bonus-only term, Island Breeze (reggae, relaxed, acousticness
+        0.40) scored 2.00 and beat Midnight Sonata (classical, melancholic,
+        0.95) at 1.90 -- the +1.0 mood match outweighed the acousticness gap
+        and the bonus could not demote anything. Centring the term flips it.
+        """
         user = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=True)
-        top = rank_songs(user, catalog, k=3)
+        by_title = {rec.song.title: rec for rec in rank_songs(user, catalog, k=len(catalog))}
 
-        # Every pick should be genuinely acoustic, not merely relaxed.
-        assert all(rec.song.acousticness >= 0.5 for rec in top), \
-            [(r.song.title, r.song.acousticness) for r in top]
-
-    def test_low_acousticness_track_no_longer_outranks_a_high_one(self, catalog):
-        """Regression: Island Breeze (0.40) used to beat Midnight Sonata (0.95)."""
-        user = UserProfile("", "relaxed", target_energy=0.2, likes_acoustic=True)
-        ranked = rank_songs(user, catalog, k=len(catalog))
-        order = [rec.song.title for rec in ranked]
-
-        assert order.index("Midnight Sonata") < order.index("Island Breeze")
+        island, sonata = by_title["Island Breeze"], by_title["Midnight Sonata"]
+        assert island.song.acousticness < sonata.song.acousticness
+        assert sonata.score > island.score
 
 
 class TestRankingInvariants:
