@@ -13,3 +13,9 @@ venv/
 
 # Pytest cache
 .pytest_cache/
+
+# Secrets — never commit a real API key. See .env.example for the template.
+.env
+
+# NOTE: logs/ is deliberately NOT ignored. The committed run logs are the
+# reproducible execution evidence referenced from README.md.
